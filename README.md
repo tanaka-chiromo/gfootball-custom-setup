@@ -47,14 +47,23 @@ Python **3.9–3.12** is the least painful. 3.13/3.14 can work if the engine com
 python3 -m venv .venv
 source .venv/bin/activate          # Windows: .venv\Scripts\activate
 
-python -m pip install --upgrade pip setuptools wheel
-python -m pip install psutil
+python -m pip install --upgrade pip setuptools wheel psutil
+python -m pip install --no-build-isolation git+https://github.com/tanaka-chiromo/gfootball-custom-setup.git
+```
 
-# From this directory, or from a zip/git checkout of it:
+SSH:
+
+```bash
+python -m pip install --no-build-isolation git+ssh://git@github.com/tanaka-chiromo/gfootball-custom-setup.git
+```
+
+From a local clone of this repo:
+
+```bash
 python -m pip install --no-build-isolation .
 ```
 
-`--no-build-isolation` is the reliable path (same as this project's training venv). With `pyproject.toml` a plain `pip install .` often works too because `psutil` is a build dependency.
+`--no-build-isolation` is the reliable path. With `pyproject.toml` a plain `pip install .` often works too because `psutil` is a build dependency.
 
 Check:
 
@@ -87,19 +96,14 @@ env = make_env(write_video=True, write_full_episode_dumps=True, logdir="replays"
 
 ## Distribute to participants
 
-Zip or git-clone **this folder** (it must include `setup.py`, `gfootball/`, and `third_party/`):
+Point people at this repo, not PyPI `gfootball`:
+
+https://github.com/tanaka-chiromo/gfootball-custom-setup
 
 ```bash
-python -m pip install --no-build-isolation /path/to/gfootball-tournament
+python -m pip install --upgrade pip setuptools wheel psutil
+python -m pip install --no-build-isolation git+https://github.com/tanaka-chiromo/gfootball-custom-setup.git
 ```
-
-or:
-
-```bash
-python -m pip install --no-build-isolation git+https://YOUR_HOST/gfootball-tournament.git
-```
-
-Do not point people at PyPI `gfootball`.
 
 ## License
 
