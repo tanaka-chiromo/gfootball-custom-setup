@@ -20,7 +20,10 @@ if exist build_win\CMakeCache.txt del build_win\CMakeCache.txt
 if exist build_win\%BUILD_CONFIGURATION% rmdir /s /q build_win\%BUILD_CONFIGURATION%
 
 pushd build_win
-cmake .. -A%GENERATOR_PLATFORM%
+rem CMakeLists.txt declares `cmake_minimum_required(VERSION 3.4)`. CMake
+rem >=4.0 refuses to configure against a <3.5 floor unless told what policy
+rem set to fall back to -- harmless to pass on older CMake too.
+cmake .. -A%GENERATOR_PLATFORM% -DCMAKE_POLICY_VERSION_MINIMUM=3.5
 if errorlevel 1 exit /B 1
 
 cmake --build . --parallel --config %BUILD_CONFIGURATION%
