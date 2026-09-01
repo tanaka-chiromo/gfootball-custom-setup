@@ -123,7 +123,7 @@ else()
 endif()
 message("Using Boost.Python: ${BOOST_PYTHON_VERSION}")
 
-FIND_PACKAGE(Boost REQUIRED COMPONENTS thread system filesystem ${BOOST_PYTHON_VERSION})
+FIND_PACKAGE(Boost REQUIRED COMPONENTS thread filesystem ${BOOST_PYTHON_VERSION})
 include_directories(${Boost_INCLUDE_DIRS})
 
 include_directories(${PROJECT_SOURCE_DIR}/src)
@@ -166,7 +166,7 @@ elseif(WIN32)
 endif()
 
 set(LIBRARIES gamelib menulib datalib blunted2
-   Boost::filesystem Boost::system Boost::thread Boost::${BOOST_PYTHON_VERSION}
+   Boost::filesystem Boost::thread Boost::${BOOST_PYTHON_VERSION}
    ${Py_TARGETS} ${SDL2_LIBS_ALL} ${EGL_LIBRARIES} ${OPENGL_LIBRARIES})
 
 add_library(${OUTPUT_LIB_NAME} SHARED ${CORE_SOURCES} ${CORE_HEADERS} ${AI_HEADERS} ${AI_SOURCES})

@@ -191,6 +191,7 @@ setup(
         'gymnasium>=0.28.0',
         'absl-py',
         'wheel',
+        'six',
     ],
     include_package_data=True,
     keywords='gfootball reinforcement-learning python machine learning',

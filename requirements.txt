@@ -7,3 +7,4 @@ gym>=0.26.2,<0.27
 gymnasium>=0.28.0
 absl-py
 wheel
+six

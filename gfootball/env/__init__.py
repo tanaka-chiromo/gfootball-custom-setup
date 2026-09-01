@@ -58,6 +58,61 @@ def _process_representation_wrappers(env, representation, channel_dimensions):
   return env
 
 
+_LEGACY_GYM_NODE_NAMES = ('FootballEnv', 'CheckpointRewardWrapper', 'MultiAgentToSingleAgent')
+
+
+def _patch_legacy_gym_api(env):
+  """Bridges gfootball's legacy gym API (reset() -> obs, step() -> 4-tuple)
+  to the gym>=0.26 / gymnasium API (reset() -> (obs, info), step() ->
+  5-tuple) at the source, by monkeypatching the innermost env node(s) that
+  still speak the old API.
+
+  This has to happen at the innermost legacy node, not just at the outermost
+  wrapper: gym's own ObservationWrapper/RewardWrapper base classes (used by
+  Simple115StateWrapper, SingleAgentRewardWrapper, etc.) already assume the
+  new API internally (e.g. `obs, info = self.env.reset(**kwargs)`), so by the
+  time an outer compatibility shim like GymnasiumCompat runs, those wrappers
+  have already misinterpreted the raw legacy return value -- silently, if the
+  return happens to unpack without erroring (e.g. reset() returning a list of
+  exactly 2 per-player observation dicts unpacks into `obs, info` without
+  raising, but obs and info end up swapped/wrong).
+  """
+
+  def _wrap_reset(node):
+    original_reset = node.reset
+
+    def reset(**kwargs):
+      result = original_reset(**kwargs)
+      if isinstance(result, tuple) and len(result) == 2:
+        return result
+      return result, {}
+
+    node.reset = reset
+
+  def _wrap_step(node):
+    original_step = node.step
+
+    def step(action, _orig=original_step):
+      result = _orig(action)
+      if len(result) == 4:
+        obs, reward, done, info = result
+        return obs, reward, done, False, info
+      return result
+
+    node.step = step
+
+  node = env
+  while True:
+    if node.__class__.__name__ in _LEGACY_GYM_NODE_NAMES:
+      _wrap_reset(node)
+      _wrap_step(node)
+      if node.__class__.__name__ == 'FootballEnv':
+        break
+    if not hasattr(node, 'env'):
+      break
+    node = node.env
+
+
 def _apply_output_wrappers(env, rewards, representation, channel_dimensions,
                            apply_single_agent_wrappers, stacked):
   """Wraps with necessary wrappers modifying the output of the environment.
@@ -222,6 +277,7 @@ def create_environment(env_name='',
       env, rewards, representation, channel_dimensions,
       (number_of_left_players_agent_controls +
        number_of_right_players_agent_controls == 1), stacked)
+  _patch_legacy_gym_api(env)
   return env
 
 

@@ -15,12 +15,13 @@ def main():
 
   env = make_env(render=args.render)
   obs, info = env.reset()
-  n_actions = env.action_space.nvec[0] if hasattr(env.action_space, "nvec") else env.action_space.n
+  multi_agent = hasattr(env.action_space, "nvec")
+  n_actions = env.action_space.nvec[0] if multi_agent else env.action_space.n
 
   total = 0.0
   for _ in range(args.steps):
-    if isinstance(obs, (list, tuple)):
-      action = [random.randrange(n_actions) for _ in obs]
+    if multi_agent:
+      action = [random.randrange(n_actions) for _ in env.action_space.nvec]
     else:
       action = random.randrange(n_actions)
     obs, reward, terminated, truncated, info = env.step(action)
