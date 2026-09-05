@@ -402,7 +402,29 @@ void GeneratePitch(int resX, int resY, int resSpecularX, int resSpecularY,
   }
 
 //  boost::thread pitchThread[4];
-  float grassNormalRepeatMultiplier = (boostrandom(0, 1) > 0.5f) ? 1.0f : 0.5f;
+  // Was boostrandom(0, 1) -- that draws from the SAME shared RNG stream
+  // (GetContext().rng) real gameplay logic uses (teamAIcontroller.cpp,
+  // humanoidbase.cpp, etc. -- anything behind boostrandom()), even
+  // though this whole function only ever runs when rendering
+  // (GeneratePitch is called from match.cpp gated on
+  // GetGameConfig().render) and only affects a cosmetic grass texture
+  // choice, which was never supposed to touch the gameplay stream at
+  // all. Fixed by drawing from random_non_determ() instead, which
+  // reads from the dedicated GetContext().rng_non_deterministic stream
+  // this same file already uses correctly everywhere else in it (see
+  // the random_non_determ calls above).
+  //
+  // NOTE, so this isn't mistaken for more than it is: this closes one
+  // confirmed instance of render-gated code stealing a gameplay-stream
+  // draw, but it is NOT a full fix for render=True vs render=False
+  // producing different match trajectories from the same seed/
+  // checkpoint -- confirmed via instrumentation that a much larger,
+  // separate cause remains (Match::Match() constructs a different
+  // NUMBER of Match objects during env reset depending on render --
+  // 5 vs 3 observed in one test -- likely a scenario-loading/retry
+  // path, not yet root-caused). Full parity would need that traced
+  // down too; this change alone does not achieve it.
+  float grassNormalRepeatMultiplier = (random_non_determ(0, 1) > 0.5f) ? 1.0f : 0.5f;
   for (int i = 0; i < 4; i++) {
     DO_VALIDATION;
     CreateChunk(i + 1, resX, resY, resSpecularX, resSpecularY, resNormalX,
